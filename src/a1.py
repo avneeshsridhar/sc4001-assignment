@@ -25,6 +25,8 @@ def trial(cfg, data):
 def main():
     out = outdir("a1")
     data = load()
+    base = Net(data["cardinalities"], data["target_mean"], data["target_std"])
+    print(f"baseline params (emb=8, hidden=64): {count(base)}")
 
     tuner = tune.Tuner(
         tune.with_parameters(trial, data=data),
@@ -63,6 +65,7 @@ def main():
     plt.ylabel("RMSE (SGD)")
     plt.title(f"A1 selected model (hidden={hidden}, emb={emb})")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(f"{out}/train_val_curve.png", dpi=150)
     plt.close()
 
@@ -71,8 +74,12 @@ def main():
     m = Net(data["cardinalities"], data["target_mean"], data["target_std"], emb, hidden)
     hist, _ = train(m, data["train"], data["test"], epochs=epochs, stop=False)
     rmse, r2 = evaluate(m, data["test"])
+    cat, cont, y = data["test"].tensors
+    with torch.no_grad():
+        bias = (m.price(cat, cont) - y).mean().item()
     print(f"params: {count(m)}")
     print(f"test RMSE: {rmse:,.0f}  test R2: {r2:.4f}")
+    print(f"test mean error: {bias:,.0f}")
 
     ep = range(1, epochs + 1)
     plt.plot(ep, hist["train"], "o-", label="train (2017-2021)")
@@ -81,13 +88,14 @@ def main():
     plt.ylabel("RMSE (SGD)")
     plt.title("A1 retrained on train+val")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(f"{out}/train_test_curve.png", dpi=150)
     plt.close()
 
     json.dump({
         "hidden": hidden, "emb": emb, "epochs": epochs,
         "val_rmse": float(top["best_val_rmse"]), "params": count(m),
-        "test_rmse": rmse, "test_r2": r2,
+        "test_rmse": rmse, "test_r2": r2, "test_bias": bias,
     }, open(f"{out}/best.json", "w"), indent=2)
 
 

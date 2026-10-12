@@ -7,7 +7,7 @@ import torch
 from common import Net, count, evaluate, load, outdir, train
 
 SEED = 42
-SEEDS = [0, 1, 2, 3, 4]
+SEEDS = [10, 13, 42, 33, 104]
 LAMS = [0, 0.25, 0.5, 1, 2]
 
 
@@ -28,6 +28,7 @@ def main():
     plt.ylabel("validation RMSE (SGD)")
     plt.title("A3 λ search")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(f"{out}/lambda_val_curves.png", dpi=150)
     plt.close()
 
@@ -65,7 +66,8 @@ def main():
     ax[1].set_ylabel("test R2")
     for name in names:
         d = df[df["model"] == name]
-        ax[2].plot(d["seed"], d["test_rmse"], "o-", label=name)
+        ax[2].plot(range(len(SEEDS)), d["test_rmse"], "o--", label=name)
+    ax[2].set_xticks(range(len(SEEDS)), SEEDS)
     ax[2].set_xlabel("seed")
     ax[2].set_ylabel("test RMSE (SGD)")
     ax[2].legend()

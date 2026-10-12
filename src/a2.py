@@ -7,7 +7,7 @@ import torch
 
 from common import Net, count, evaluate, load, outdir, train
 
-SEEDS = [0, 1, 2, 3, 4]
+SEEDS = [10, 13, 42, 33, 104]
 
 
 def main():
@@ -60,12 +60,14 @@ def main():
     ep = range(1, best["epochs"] + 1)
     for name, c in curves.items():
         c = np.array(c)
-        plt.plot(ep, c.mean(0), "o-", label=name)
-        plt.fill_between(ep, c.mean(0) - c.std(0), c.mean(0) + c.std(0), alpha=0.2)
+        mu, sd = c.mean(0), c.std(0, ddof=1)
+        plt.plot(ep, mu, "o-", label=name)
+        plt.fill_between(ep, mu - sd, mu + sd, alpha=0.2)
     plt.xlabel("epoch")
     plt.ylabel("train RMSE (SGD)")
     plt.title("A2 training curves (mean ± s.d. over 5 seeds)")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(f"{out}/train_curves.png", dpi=150)
     plt.close()
 
